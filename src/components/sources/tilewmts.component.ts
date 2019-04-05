@@ -1,4 +1,15 @@
-import {Component, Host, Input, forwardRef, AfterContentInit, ContentChild, SimpleChanges} from '@angular/core';
+import {
+  Component,
+  Host,
+  Input,
+  forwardRef,
+  AfterContentInit,
+  ContentChild,
+  SimpleChanges,
+  Output,
+  EventEmitter,
+  OnInit
+} from '@angular/core';
 import {
   TileLoadFunctionType,
   tilegrid,
@@ -19,7 +30,7 @@ import {TileGridWMTSComponent} from '../tilegridwmts.component';
     {provide: SourceComponent, useExisting: forwardRef(() => SourceTileWMTSComponent)}
   ]
 })
-export class SourceTileWMTSComponent extends SourceComponent implements AfterContentInit {
+export class SourceTileWMTSComponent extends SourceComponent implements OnInit ,AfterContentInit {
 
   instance: source.WMTS;
   @Input() cacheSize?: number;
@@ -42,10 +53,22 @@ export class SourceTileWMTSComponent extends SourceComponent implements AfterCon
   @Input() urls?: string[];
   @Input() wrapX?: boolean;
 
+  @Output()  onTileLoadStart = new EventEmitter<source.TileSourceEvent>();
+  @Output()  onTileLoadEnd = new EventEmitter<source.TileSourceEvent>();
+  @Output()  onTileLoadError = new EventEmitter<source.TileSourceEvent>();
+
   @ContentChild(TileGridWMTSComponent) tileGridWMTS: TileGridWMTSComponent;
 
   constructor(@Host() layer: LayerTileComponent) {
     super(layer);
+  }
+
+  ngOnInit() {
+    this.instance = new source.WMTS(this);
+    this.host.instance.setSource(this.instance);
+    this.instance.on('tileloadstart', (event: source.ImageEvent) => this.onImageLoadStart.emit(event));
+    this.instance.on('tileloadend', (event: source.ImageEvent) => this.onImageLoadEnd.emit(event));
+    this.instance.on('tileloaderror', (event: source.ImageEvent) => this.onImageLoadError.emit(event));
   }
 
 
